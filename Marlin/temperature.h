@@ -51,8 +51,10 @@
 
 #if HOTENDS == 1
   #define HOTEND_INDEX  0
+  #define EXTRUDER_IDX  0
 #else
   #define HOTEND_INDEX  e
+  #define EXTRUDER_IDX  active_extruder
 #endif
 
 /**
@@ -505,7 +507,7 @@ class Temperature {
     #if ENABLED(BABYSTEPPING)
 
       static void babystep_axis(const AxisEnum axis, const int16_t distance) {
-        if (TEST(axis_known_position, axis)) {
+        if (axis_known_position[axis]) {
           #if IS_CORE
             #if ENABLED(BABYSTEP_XY)
               switch (axis) {

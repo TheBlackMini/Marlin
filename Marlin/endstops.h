@@ -27,29 +27,15 @@
 #ifndef __ENDSTOPS_H__
 #define __ENDSTOPS_H__
 
+#include "enum.h"
 #include "MarlinConfig.h"
-
-enum EndstopEnum : char {
-  X_MIN,
-  Y_MIN,
-  Z_MIN,
-  Z_MIN_PROBE,
-  X_MAX,
-  Y_MAX,
-  Z_MAX,
-  X2_MIN,
-  X2_MAX,
-  Y2_MIN,
-  Y2_MAX,
-  Z2_MIN,
-  Z2_MAX
-};
 
 class Endstops {
 
   public:
 
     static bool enabled, enabled_globally;
+    static volatile char endstop_hit_bits; // use X_MIN, Y_MIN, Z_MIN and Z_MIN_PROBE as BIT value
 
     #if ENABLED(X_DUAL_ENDSTOPS) || ENABLED(Y_DUAL_ENDSTOPS) || ENABLED(Z_DUAL_ENDSTOPS)
       typedef uint16_t esbits_t;
@@ -63,21 +49,20 @@ class Endstops {
         static float z_endstop_adj;
       #endif
     #else
-      typedef uint8_t esbits_t;
+      typedef byte esbits_t;
     #endif
 
-  private:
-    static esbits_t live_state;
-    static volatile uint8_t hit_state;      // Use X_MIN, Y_MIN, Z_MIN and Z_MIN_PROBE as BIT index
+    static esbits_t current_endstop_bits, old_endstop_bits;
 
-    #if ENABLED(ENDSTOP_NOISE_FILTER)
-      static esbits_t validated_live_state;
-      uint8_t Endstops::endstop_poll_count;
-      static uint8_t endstop_poll_count;    // Countdown from threshold for polling
-    #endif
-
-  public:
-    Endstops() {};
+    Endstops() {
+      enable_globally(
+        #if ENABLED(ENDSTOPS_ALWAYS_ON_DEFAULT)
+          true
+        #else
+          false
+        #endif
+      );
+    };
 
     /**
      * Initialize the endstop pins
@@ -85,50 +70,14 @@ class Endstops {
     static void init();
 
     /**
-     * Are endstops or the probe set to abort the move?
-     */
-    FORCE_INLINE static bool abort_enabled() {
-      return (enabled
-        #if HAS_BED_PROBE
-          || z_probe_enabled
-        #endif
-      );
-    }
-
-    /**
-     * Periodic call to poll endstops if required. Called from temperature ISR
-     */
-    static void poll();
-
-    /**
-     * Update endstops bits from the pins. Apply filtering to get a verified state.
-     * If abort_enabled() and moving towards a triggered switch, abort the current move.
-     * Called from ISR contexts.
+     * Update the endstops bits from the pins
      */
     static void update();
 
     /**
-     * Get Endstop hit state.
+     * Print an error message reporting the position when the endstops were last hit.
      */
-    FORCE_INLINE static uint8_t trigger_state() { return hit_state; }
-
-    /**
-     * Get current endstops state
-     */
-    FORCE_INLINE static esbits_t state() {
-      return
-        #if ENABLED(ENDSTOP_NOISE_FILTER)
-          validated_live_state
-        #else
-          live_state
-        #endif
-      ;
-    }
-
-    /**
-     * Report endstop hits to serial. Called from loop().
-     */
-    static void report_state();
+    static void report_state(); //call from somewhere to create an serial error message with the locations the endstops where hit, in case they were triggered
 
     /**
      * Report endstop positions in response to M119
@@ -136,31 +85,42 @@ class Endstops {
     static void M119();
 
     // Enable / disable endstop checking globally
-    static void enable_globally(const bool onoff=true);
+    static void enable_globally(bool onoff=true) { enabled_globally = enabled = onoff; }
 
     // Enable / disable endstop checking
-    static void enable(const bool onoff=true);
+    static void enable(bool onoff=true) { enabled = onoff; }
 
     // Disable / Enable endstops based on ENSTOPS_ONLY_FOR_HOMING and global enable
-    static void not_homing();
+    static void not_homing() { enabled = enabled_globally; }
 
     // Clear endstops (i.e., they were hit intentionally) to suppress the report
-    FORCE_INLINE static void hit_on_purpose() { hit_state = 0; }
+    static void hit_on_purpose() { endstop_hit_bits = 0; }
 
     // Enable / disable endstop z-probe checking
     #if HAS_BED_PROBE
       static volatile bool z_probe_enabled;
-      static void enable_z_probe(const bool onoff=true);
+      static void enable_z_probe(bool onoff=true) { z_probe_enabled = onoff; }
     #endif
 
-    // Debugging of endstops
-    #if ENABLED(PINS_DEBUGGING)
-      static bool monitor_flag;
-      static void monitor();
-      static void run_monitor();
+  private:
+
+    #if ENABLED(X_DUAL_ENDSTOPS)
+      static void test_dual_x_endstops(const EndstopEnum es1, const EndstopEnum es2);
+    #endif
+    #if ENABLED(Y_DUAL_ENDSTOPS)
+      static void test_dual_y_endstops(const EndstopEnum es1, const EndstopEnum es2);
+    #endif
+    #if ENABLED(Z_DUAL_ENDSTOPS)
+      static void test_dual_z_endstops(const EndstopEnum es1, const EndstopEnum es2);
     #endif
 };
 
 extern Endstops endstops;
+
+#if HAS_BED_PROBE
+  #define ENDSTOPS_ENABLED  (endstops.enabled || endstops.z_probe_enabled)
+#else
+  #define ENDSTOPS_ENABLED  endstops.enabled
+#endif
 
 #endif // __ENDSTOPS_H__

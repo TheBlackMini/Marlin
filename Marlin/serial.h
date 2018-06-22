@@ -25,10 +25,7 @@
 
 #include "MarlinConfig.h"
 
-#if USE_MARLINSERIAL
-  #include "MarlinSerial.h"
-  #define MYSERIAL0 customizedSerial
-#else
+#if defined(__AVR__) && defined(USBCON)
   #include <HardwareSerial.h>
   #if ENABLED(BLUETOOTH)
     extern HardwareSerial bluetoothSerial;
@@ -36,6 +33,9 @@
   #else
     #define MYSERIAL0 Serial
   #endif // BLUETOOTH
+#else
+  #include "MarlinSerial.h"
+  #define MYSERIAL0 customizedSerial
 #endif
 
 extern const char echomagic[] PROGMEM;

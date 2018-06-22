@@ -110,9 +110,8 @@
 #define HEATER_2_PIN       45   // F7
 #define HEATER_BED_PIN     14   // C4 PWM3C
 
-#ifndef FAN_PIN
-  #define FAN_PIN          16   // C6 PWM3A
-#endif
+
+#define FAN_PIN            16   // C6 PWM3A
 
 //
 // Misc. Functions

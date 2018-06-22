@@ -134,6 +134,9 @@
   // External references
 
   extern Planner planner;
+  #if ENABLED(ULTRA_LCD)
+    extern char lcd_status_message[];
+  #endif
 
   // Private functions
 
@@ -270,6 +273,8 @@
         }
 
         wait_for_release();
+
+        strcpy_P(lcd_status_message, PSTR("Done Priming")); // Hack to get the message up. May be obsolete.
 
         lcd_setstatusPGM(PSTR("Done Priming"), 99);
         lcd_quick_feedback(true);

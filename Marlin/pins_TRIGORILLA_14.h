@@ -30,10 +30,9 @@
 
 #define IS_RAMPS_EFB
 
-#define FAN2_PIN             44
-#define ORIG_E0_AUTO_FAN_PIN 44
-
 #include "pins_RAMPS_13.h"
+
+#define FAN2_PIN           44
 
 #undef E1_STEP_PIN
 #undef E1_DIR_PIN

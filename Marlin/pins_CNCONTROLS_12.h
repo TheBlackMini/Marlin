@@ -65,9 +65,7 @@
 #define HEATER_3_PIN        3
 #define HEATER_BED_PIN     24
 
-#ifndef FAN_PIN
-  #define FAN_PIN           5   // 5 is PWMtool3 -> 7 is common PWM pin for all tools
-#endif
+#define FAN_PIN             5   // 5 is PWMtool3 -> 7 is common PWM pin for all tools
 
 #define ORIG_E0_AUTO_FAN_PIN 7
 #define ORIG_E1_AUTO_FAN_PIN 7
@@ -126,4 +124,4 @@
 //#define UI2              37
 
 #define STAT_LED_BLUE_PIN  -1
-#define STAT_LED_RED_PIN   10   // TOOL_0_PWM_PIN
+#define STAT_LED_RED_PIN   10 // TOOL_0_PWM_PIN
